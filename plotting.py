@@ -24,7 +24,6 @@ import matplotlib.patches as mpatches
 import matplotlib.ticker as ticker
 import numpy.polynomial.polynomial as poly
 import pandas as pd
-from fastquant import get_crypto_data
 from matplotlib import pyplot as plt
 from sklearn.metrics import r2_score
 
@@ -368,10 +367,10 @@ def median_plotting(dfs: List[pd.DataFrame],
 
     if roll > 0:
         plt.title(f"{title} {roll} Day Rolling Average - % MSRP")
-        plt.savefig(f"Images/{title} {roll} Day Rolling Average - % MSRP")
+        plt.savefig(f"Images\\{title} {roll} Day Rolling Average - % MSRP")
     else:
         plt.title(f"{title} - % MSRP")
-        plt.savefig(f"Images/{title} - % MSRP")
+        plt.savefig(f"Images\\{title} - % MSRP")
 
     if e_vars.show_plots: plt.show()
 
@@ -405,10 +404,10 @@ def median_plotting(dfs: List[pd.DataFrame],
     plt.gcf().text(0.85, 0.01, '@driscoll42', fontsize=9)
     if roll > 0:
         plt.title(f"{title} {roll} Day Rolling Average - {e_vars.ccode}")
-        plt.savefig(f"Images/{title} {roll} Day Rolling Average - {e_vars.ccode}")
+        plt.savefig(f"Images\\{title} {roll} Day Rolling Average - {e_vars.ccode}")
     else:
         plt.title(f"{title} - {e_vars.ccode}")
-        plt.savefig(f"Images/{title} - {e_vars.ccode}")
+        plt.savefig(f"Images\\{title} - {e_vars.ccode}")
     if e_vars.show_plots: plt.show()
 
 
@@ -472,10 +471,10 @@ def mean_plotting(dfs: List[pd.DataFrame],
 
     if roll > 0:
         plt.title(f"{title} {roll} Day Rolling Average - % MSRP")
-        plt.savefig(f"Images/{title} {roll} Day Rolling Average - % MSRP")
+        plt.savefig(f"Images\\{title} {roll} Day Rolling Average - % MSRP")
     else:
         plt.title(f"{title} - % MSRP")
-        plt.savefig(f"Images/{title} - % MSRP")
+        plt.savefig(f"Images\\{title} - % MSRP")
 
     if e_vars.show_plots: plt.show()
 
@@ -513,158 +512,11 @@ def mean_plotting(dfs: List[pd.DataFrame],
     plt.gcf().text(0.85, 0.01, '@driscoll42', fontsize=9)
     if roll > 0:
         plt.title(f"{title} {roll} Day Rolling Average - {e_vars.ccode}")
-        plt.savefig(f"Images/{title} {roll} Day Rolling Average - {e_vars.ccode}")
+        plt.savefig(f"Images\\{title} {roll} Day Rolling Average - {e_vars.ccode}")
     else:
         plt.title(f"{title} - {e_vars.ccode}")
-        plt.savefig(f"Images/{title} - {e_vars.ccode}")
+        plt.savefig(f"Images\\{title} - {e_vars.ccode}")
     if e_vars.show_plots: plt.show()
-
-
-def crpyto_comp_plotting(dfs: List[pd.DataFrame],
-                         title: str,
-                         e_vars: EbayVariables,
-                         start_date: datetime,
-                         end_date: datetime,
-                         roll: int = 0,
-                         min_msrp: int = 100
-                         ) -> None:
-    """
-
-    Parameters
-    ----------
-    dfs :
-    title :
-    e_vars :
-    roll :
-    min_msrp :
-
-    Returns
-    -------
-
-    """
-    dfs = deepcopy(dfs)
-
-    min_date = datetime.now()
-    max_date = datetime.now() - timedelta(365)
-    for df in dfs:
-        df = df[df['Sold Date'] >= start_date]
-        df = df[df['Sold Date'] <= end_date]
-
-        df_min = df['Sold Date'].min()
-        df_max = df['Sold Date'].max()
-        if df_min < min_date:
-            min_date = df_min
-        if df_max > max_date:
-            max_date = df_max
-
-    min_date = str(min_date - timedelta(1)).split(' ')[0]
-    max_date = str(max_date).split(' ')[0]
-
-    # Etherium Pricing
-    # print(min_date, max_date)
-    eth_crypto_full = get_crypto_data("ETH/USDT", min_date, max_date)
-    eth_crypto_full = eth_crypto_full.close
-    eth_prices = eth_crypto_full.div(eth_crypto_full[0])
-    # eth_prices = eth_prices.mul(100)
-
-    # Bitcoin Pricing
-    btc_crypto = get_crypto_data("BTC/USDT", min_date, max_date)
-    btc_prices = btc_crypto.close
-    btc_prices = btc_prices.div(btc_prices[0])
-    btc_prices = btc_prices.mul(100)
-
-    colors = ['#000000', '#7f0000', '#808000', '#008080', '#000080', '#ff8c00', '#2f4f4f', '#00ff00', '#0000ff',
-              '#ff00ff', '#6495ed', '#ff1493', '#98fb98', '#ffdab9']
-    plt.figure()  # In this example, all the plots will be in one figure.
-    plt.ylabel("GPU: Price/hashrate - ETH: Price")
-    plt.xlabel("Sale Date")
-    plt.tick_params(axis='y')
-    plt.tick_params(axis='x', rotation=30)
-
-    for i, df in enumerate(dfs):
-        color = i % (len(colors) - 1)
-
-        df = prep_df(df)
-        df = df[df['Sold Date'] >= start_date]
-        df = df[df['Sold Date'] <= end_date]
-
-        hash_rate = 1
-        # Source https://cryptoage.com/en/2380-the-current-table-with-the-hash-rate-of-videocards-for-2021.html
-        if '3060 Ti' in df['item'].iloc[0]:
-            hash_rate = 59
-        elif '3060' in df['item'].iloc[0]:
-            hash_rate = 37.5
-        elif '3070' in df['item'].iloc[0]:
-            hash_rate = 59
-        elif '3080 Ti' in df['item'].iloc[0]:
-            hash_rate = 64
-        elif '3080' in df['item'].iloc[0]:
-            hash_rate = 100
-        elif '3090' in df['item'].iloc[0]:
-            hash_rate = 111
-
-        med_prices = df.groupby(['Sold Date'])['Total Price'].median() / hash_rate / eth_prices
-
-        # med_prices = 100 * med_prices / med_prices[0]
-        # print(df['item'].iloc[0], 'R Squared:', r2_score(eth_prices[-(len(med_price_scaled)):], med_price_scaled))
-        # print(df['item'].iloc[0], 'R Squared:', r2_score(med_prices, eth_prices[-(len(med_prices)):]))
-
-        # med_mad = robust.mad(df.groupby(['Sold Date'])['Total Price']/ msrps[i] * 100)
-        # print(med_mad)
-
-        if roll > 0:
-            med_prices = med_prices.rolling(roll, min_periods=1).mean()
-
-        min_msrp = min(min_msrp, min(med_prices))
-        plt.plot(med_prices, colors[color], label=df['item'].iloc[0])
-        # plt.fill_between(med_price_scaled, med_price_scaled - med_mad, med_price_scaled + med_mad, color=colors[ci])
-
-    plt.plot(eth_prices, label='Etherium')
-    # plt.plot(btc_prices, label='Bitcoin')
-    # plt.ylim(bottom=min_msrp)
-    plt.legend()
-    # plt.tight_layout()
-    plt.subplots_adjust(bottom=0.2)
-    # plt.tight_layout()
-
-    if roll > 0:
-        plt.title(f"{title} {roll} Day Rolling Average - % MSRP")
-        plt.savefig(f"Images/{title} {roll} Day Rolling Average - % MSRP")
-    else:
-        plt.title(f"{title} - % MSRP")
-        plt.savefig(f"Images/{title} - % MSRP")
-    if e_vars.show_plots: plt.show()
-
-    # Plotting the non-scaled graph
-    plt.figure()  # In this example, all the plots will be in one figure.
-    fig, ax1 = plt.subplots()
-    plt.ylabel(f"Median Sale Price ({e_vars.ccode})")
-    plt.xlabel("Sale Date")
-    plt.tick_params(axis='y')
-    plt.tick_params(axis='x', rotation=30)
-    if roll > 0:
-        plt.title(f"{title} {roll} Day Rolling Average - {e_vars.ccode}")
-    else:
-        plt.title(f"{title} - {e_vars.ccode}")
-    for i, df in enumerate(dfs):
-        color = i % (len(colors) - 1)
-        df = df[df['Sold Date'] >= datetime(2021, 1, 1)]
-
-        med_price = df.groupby(['Sold Date'])['Total Price'].median()
-
-        if roll > 0:
-            med_price = med_price.rolling(roll, min_periods=1).mean()
-
-        min_msrp = min(min_msrp, min(med_price))
-        plt.plot(med_price, colors[color], label=df['item'].iloc[0])
-    # plt.ylim(bottom=min_msrp)
-    formatter = ticker.FormatStrFormatter(f'{e_vars.ccode}%1.0f')
-    ax1.yaxis.set_major_formatter(formatter)
-    plt.legend()
-    plt.tight_layout()
-    # plt.savefig(f"Images/{title} - {e_vars.ccode}")
-    # if e_vars.show_plots: plt.show()
-    plt.show()
 
 
 # https://tylermarrs.com/posts/pareto-plot-with-matplotlib/
@@ -730,7 +582,7 @@ def pareto_plot(df: pd.DataFrame,
 
     fig.tight_layout()
 
-    plt.savefig('Images/' + title)
+    plt.savefig('Images\\' + title)
     if e_vars.show_plots: plt.show()
 
 
@@ -901,8 +753,8 @@ def brand_plot(dfs: List[pd.DataFrame],
     plt.legend()
     plt.tight_layout()
     if roll > 0:
-        plt.savefig(f"Images/{title} {roll} Day Rolling Average")
+        plt.savefig(f"Images\\{title} {roll} Day Rolling Average")
     else:
-        plt.savefig(f"Images/{title}")
+        plt.savefig(f"Images\\{title}")
 
     if e_vars.show_plots: plt.show()

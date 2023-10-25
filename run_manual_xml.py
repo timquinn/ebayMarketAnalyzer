@@ -29,7 +29,7 @@ ignore_list = ['BENT PINS', 'BROKEN', 'PARTS ONLY']
 ps5_digi_excludes = query_exclusions.copy()
 
 # Set Class variables
-e_vars = EbayVariables(run_cached=True,
+e_vars = EbayVariables(run_cached=False,
                        sleep_len=8,
                        show_plots=True,
                        main_plot=True,
@@ -41,8 +41,8 @@ e_vars = EbayVariables(run_cached=True,
                        ccode='$',
                        days_before=365,
                        feedback=True,
-                       quantity_hist=True,
-                       debug=False,
+                       quantity_hist=False,
+                       debug=True,
                        verbose=True,
                        sacat=0,
                        tax_rate=0.0625,
@@ -104,55 +104,55 @@ ebay_seller_plot(zen3_frames, 'Zen 3', e_vars=cpu_vars)
 '''
 
 # Big Navi Analysis
-df_6600 = ebay_search('RX 6600', gpu_vars, 379, 379, 2500)
-df_6700 = ebay_search('RX 6700', gpu_vars, 479, 479, 2500)
-df_6800 = ebay_search('RX 6800', gpu_vars, 579, 579, 2500)
-df_6800xt = ebay_search('RX 6800 XT', gpu_vars, 649, 850, 2000)
-df_6900 = ebay_search('RX 6900', gpu_vars, 999, 999, 999999, min_date=datetime(2020, 12, 8))
+# df_6600 = ebay_search('RX 6600', gpu_vars, 379, 379, 2500)
+# df_6700 = ebay_search('RX 6700', gpu_vars, 479, 479, 2500)
+# df_6800 = ebay_search('RX 6800', gpu_vars, 579, 579, 2500)
+# df_6800xt = ebay_search('RX 6800 XT', gpu_vars, 649, 850, 2000)
+# df_6900 = ebay_search('RX 6900', gpu_vars, 999, 999, 999999, min_date=datetime(2020, 12, 8))
 
 # Big Navi Plotting
-bignavi_frames = [df_6600, df_6700, df_6800, df_6800xt, df_6900]
-bignavi_colors = ['red', 'purple', 'green', 'cyan', 'lime', 'black', 'white']
+# bignavi_frames = [df_6600, df_6700, df_6800, df_6800xt, df_6900]
+# bignavi_colors = ['red', 'purple', 'green', 'cyan', 'lime', 'black', 'white']
 
-median_plotting(bignavi_frames, 'Big Navi Median Pricing', colors=bignavi_colors, e_vars=gpu_vars, roll=0)
-median_plotting(bignavi_frames, 'Big Navi Median Pricing', colors=bignavi_colors, e_vars=gpu_vars, roll=7)
+# median_plotting(bignavi_frames, 'Big Navi Median Pricing', colors=bignavi_colors, e_vars=gpu_vars, roll=0)
+# median_plotting(bignavi_frames, 'Big Navi Median Pricing', colors=bignavi_colors, e_vars=gpu_vars, roll=7)
 
-mean_plotting(bignavi_frames, 'Big Navi Mean Pricing', e_vars=gpu_vars, roll=0, stdev_plot=True)
-mean_plotting(bignavi_frames, 'Big Navi Mean Pricing', e_vars=gpu_vars, roll=7, stdev_plot=True)
+# mean_plotting(bignavi_frames, 'Big Navi Mean Pricing', e_vars=gpu_vars, roll=0, stdev_plot=True)
+# mean_plotting(bignavi_frames, 'Big Navi Mean Pricing', e_vars=gpu_vars, roll=7, stdev_plot=True)
 
-ebay_seller_plot(bignavi_frames, 'Big Navi', gpu_vars)
+# ebay_seller_plot(bignavi_frames, 'Big Navi', gpu_vars)
 
-brand_plot(bignavi_frames, 'Big Navi AIB Comparison', e_vars=gpu_vars, roll=0)
-brand_plot(bignavi_frames, 'Big Navi AIB Comparison', e_vars=gpu_vars, roll=7)
+# brand_plot(bignavi_frames, 'Big Navi AIB Comparison', e_vars=gpu_vars, roll=0)
+# brand_plot(bignavi_frames, 'Big Navi AIB Comparison', e_vars=gpu_vars, roll=7)
 
 # ---------------------------------------------------------------------------------------------
 # RTX 30 Series Analysis
-df_3060 = ebay_search('RTX 3060', gpu_vars, 329, 329, 2000, min_date=datetime(2021, 2, 25))
+df_3060 = ebay_search('RTX 3060', gpu_vars, 329, 329, 2000, min_date=datetime(2023, 10, 1))
 # Remember to search ebay with -Ti
-df_3060ti = ebay_search('RTX 3060 Ti', gpu_vars, 399, 399, 5000, min_date=datetime(2020, 12, 1))
-df_3070 = ebay_search('RTX 3070', gpu_vars, 499, 499, 10000, min_date=datetime(2020, 10, 29))
+df_3060ti = ebay_search('RTX 3060 Ti', gpu_vars, 399, 399, 5000, min_date=datetime(2023, 10, 1))
+# df_3070 = ebay_search('RTX 3070', gpu_vars, 499, 499, 10000, min_date=datetime(2020, 10, 29))
 # Remember to search ebay with -Ti
-df_3070ti = ebay_search('RTX 3070 Ti', gpu_vars, 599, 599, 10000, min_date=datetime(2020, 6, 10))
-df_3080 = ebay_search('RTX 3080', gpu_vars, 699, 699, 10000, min_date=datetime(2020, 9, 17))
-df_3080ti = ebay_search('RTX 3080 Ti', gpu_vars, 1199, 1199, 10000, min_date=datetime(2021, 6, 3))
-df_3090 = ebay_search('RTX 3090', gpu_vars, 1499, 1499, 10000, min_date=datetime(2020, 9, 17))
+# df_3070ti = ebay_search('RTX 3070 Ti', gpu_vars, 599, 599, 10000, min_date=datetime(2020, 6, 10))
+# df_3080 = ebay_search('RTX 3080', gpu_vars, 699, 699, 10000, min_date=datetime(2020, 9, 17))
+# df_3080ti = ebay_search('RTX 3080 Ti', gpu_vars, 1199, 1199, 10000, min_date=datetime(2021, 6, 3))
+# df_3090 = ebay_search('RTX 3090', gpu_vars, 1499, 1499, 10000, min_date=datetime(2020, 9, 17))
 
 # RTX 30 Series/Ampere Plotting
-df_3060ti = df_3060ti.assign(item='RTX 3060 Ti')
-ampere_frames = [df_3060, df_3060ti, df_3070, df_3070ti, df_3080, df_3090]
-ampere_colors = ['#0B6623', '#708238', '#39FF14', '#00A86B', '#043927', '#01796F', '#4F7942']
-ampere_colors = ['red', 'purple', 'green', 'cyan', 'lime', 'black', 'white']
+# df_3060ti = df_3060ti.assign(item='RTX 3060 Ti')
+ampere_frames = [df_3060, df_3060ti]#, df_3070, df_3070ti, df_3080, df_3090]
+ampere_colors = ['#0B6623', '#708238']#, '#39FF14', '#00A86B', '#043927', '#01796F', '#4F7942']
+ampere_colors = ['red', 'purple']#, 'green', 'cyan', 'lime', 'black', 'white']
 
-median_plotting(ampere_frames, 'RTX 30 Series Median Pricing', colors=ampere_colors, e_vars=gpu_vars, roll=0)
-median_plotting(ampere_frames, 'RTX 30 Series Median Pricing', colors=ampere_colors, e_vars=gpu_vars, roll=7)
+# median_plotting(ampere_frames, 'RTX 30 Series Median Pricing', colors=ampere_colors, e_vars=gpu_vars, roll=0)
+# median_plotting(ampere_frames, 'RTX 30 Series Median Pricing', colors=ampere_colors, e_vars=gpu_vars, roll=7)
 
 mean_plotting(ampere_frames, 'RTX 30 Series Average Pricing', e_vars=gpu_vars, roll=0, stdev_plot=True)
 mean_plotting(ampere_frames, 'RTX 30 Series Average Pricing', e_vars=gpu_vars, roll=7, stdev_plot=True)
 
 ebay_seller_plot(ampere_frames, 'RTX 30 Series-Ampere', gpu_vars)
 
-brand_plot(ampere_frames, 'RTX 30 Series-Ampere AIB Comparison', e_vars=gpu_vars, roll=0)
-brand_plot(ampere_frames, 'RTX 30 Series-Ampere AIB Comparison', e_vars=gpu_vars, roll=7)
+# brand_plot(ampere_frames, 'RTX 30 Series-Ampere AIB Comparison', e_vars=gpu_vars, roll=0)
+# brand_plot(ampere_frames, 'RTX 30 Series-Ampere AIB Comparison', e_vars=gpu_vars, roll=7)
 
 # ---------------------------------------------------------------------------------------------
 '''

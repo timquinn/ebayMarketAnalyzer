@@ -473,7 +473,7 @@ def ebay_scrape(xml_file,
                 adapter: requests,
                 e_vars: EbayVariables,
                 min_date: datetime = datetime(2020, 1, 1),
-                max_date: datetime = datetime(2020, 1, 1)) -> pd.DataFrame:
+                max_date: datetime = datetime(2023, 12, 1)) -> pd.DataFrame:
     """
 
     Parameters
@@ -508,10 +508,10 @@ def ebay_scrape(xml_file,
 
     def sp_get_title(item):
         try:
-            item_title = item.find('h3', class_='s-item__title').text
+            item_title = item.find('div', class_='s-item__title').text
         except Exception as e:
             item_title = ''
-            if e_vars.verbose: print('sp_get_title', e, item_link)
+            if e_vars.verbose: print('s-item__title', e, item_title)
         return item_title
 
     def sp_get_desc(item):
@@ -519,7 +519,7 @@ def ebay_scrape(xml_file,
             item_desc = item.find('div', class_='s-item__subtitle').text
         except Exception as e:
             item_desc = ''
-            if e_vars.verbose: print('sp_get_desc', e, item_link)
+            if e_vars.verbose: print('sp_get_desc', e, item_desc)
         return item_desc
 
     def sp_get_price(item):
@@ -528,7 +528,7 @@ def ebay_scrape(xml_file,
             item_price = float(re.sub(r'[^\d.]+', '', item_price))
         except Exception as e:
             item_price = -1
-            if e_vars.verbose: print('sp_get_price', e, item_link)
+            if e_vars.verbose: print('sp_get_price', e, item_price)
         return item_price
 
     def sp_get_shipping(item):
@@ -540,7 +540,7 @@ def ebay_scrape(xml_file,
                 item_shipping = 0
         except Exception as e:
             item_shipping = 0
-            if e_vars.verbose: print('sp_get_shipping', e, item_link)
+            if e_vars.verbose: print('sp_get_shipping', e, item_shipping)
         return item_shipping
 
     def ip_get_datetime(item_soup, days_before_date):
@@ -605,16 +605,17 @@ def ebay_scrape(xml_file,
     def ip_get_seller(item_soup):
         seller, seller_fb, store = '', '', False
         try:
-            seller_text = item_soup.find_all('span', attrs={'class': 'mbg-nw'})
-            seller = seller_text[0].text
+            seller_text = item_soup.find_all('span', attrs={'class': 's-item__seller-info-text'})
+            seller_text = seller_text[0].text.split()
+            seller = seller_text[0]
 
-            seller_fb_text = item_soup.find_all('span', attrs={'class': 'mbg-l'})
-            seller_fb = int(seller_fb_text[0].find('a').text)
+            # seller_fb_text = item_soup.find_all('span', attrs={'class': 's-item__seller-info-text'})
+            seller_fb = int(seller_text[1].replace('(','').replace(')','').replace(',',''))#int(seller_fb_text[0].find('a').text)
 
             store_id = item_soup.find_all('div', attrs={'id': 'storeSeller'})
 
-            if len(store_id[0].text) > 0:
-                store = True
+            #if len(store_id[0].text) > 0:
+            #    store = True
         except Exception as e:
             if e_vars.verbose: print('ip_get_seller', e, item_link)
         return seller, seller_fb, store
@@ -678,6 +679,7 @@ def ebay_scrape(xml_file,
             if e_vars.debug or e_vars.verbose: print('URL:', item_link)
 
             item_date, item_datetime, days_before_date = sp_get_datetime(item, days_before_date, e_vars, xml_file_name)
+            if item_datetime == '':item_datetime=item_date
             if e_vars.debug or e_vars.verbose: print('Date-1:', item_date)
             if e_vars.debug or e_vars.verbose: print('Datetime-1:', item_datetime)
 
@@ -727,6 +729,11 @@ def ebay_scrape(xml_file,
                 city, state, country_name = '', '', ''
 
                 if e_vars.feedback or e_vars.quantity_hist:
+                    seller, seller_fb, store = ip_get_seller(item)
+                    if e_vars.debug or e_vars.verbose: print('Seller:', seller)
+                    if e_vars.debug or e_vars.verbose: print('Seller Feedback:', seller_fb)
+                    if e_vars.debug or e_vars.verbose: print('Store:', store)
+                    '''
                     time.sleep(e_vars.sleep_len * random.uniform(0, 1))
                     # We don't want to cache all the calls into the individual listings, they'll never be repeated
                     isource = request_link(item_link, adapter, cache=False, e_vars=e_vars, page_type='Item')
@@ -795,6 +802,7 @@ def ebay_scrape(xml_file,
                                 item_date = item_date_temp
                             if e_vars.debug or e_vars.verbose: print('Date-4:', item_date)
                             if e_vars.debug or e_vars.verbose: print('Datetime-4:', item_datetime)
+                    '''
 
                 brand = ''
                 title = item_title
@@ -851,7 +859,7 @@ def ebay_scrape(xml_file,
                             {'Link': [item_link], 'Sold Datetime': [item_datetime]}).all(
                             axis='columns').any() and item_tot > 0 and (quantity_sold - cap_sum) > 0:
                         if e_vars.verbose: print('non-multi', df__new)
-                        df = df.append(df__new, ignore_index=True)
+                        df = df._append(df__new, ignore_index=True)
                         # Considered processing as went along, more efficient to just remove duplicates in postprocessing
                 else:
                     for sale in sold_list:
@@ -899,7 +907,7 @@ def ebay_scrape(xml_file,
                                  'Quantity': [quantity_sold - tot_sale_quant]}).all(
                                 axis='columns').any() and item_tot > 0:
                             if e_vars.verbose: print('multi-extra', df__new)
-                            df = df.append(df__new, ignore_index=True)
+                            df = df._append(df__new, ignore_index=True)
     return df
 
 
@@ -950,7 +958,7 @@ def ebay_search(query: str,
     retry_strategy = Retry(
             total=5,
             status_forcelist=[429, 500, 502, 503, 504, 404],
-            method_whitelist=["HEAD", "GET", "OPTIONS"],
+            # method_whitelist=["HEAD", "GET", "OPTIONS"],
             backoff_factor=1
 
     )
@@ -963,7 +971,7 @@ def ebay_search(query: str,
     filename = query + e_vars.extra_title_text + '.xlsx'
 
     try:
-        df = pd.read_excel('Spreadsheets/' + filename, index_col=0, engine='openpyxl')
+        df = pd.read_excel('Spreadsheets\\' + filename, index_col=0, engine='openpyxl')
         df = df.astype({'Brand': 'object'})
         df = df.astype({'Model': 'object'})
 
@@ -990,8 +998,8 @@ def ebay_search(query: str,
 
     try:
         df_sum = pd.read_excel('summary.xlsx', index_col=0, engine='openpyxl')
-
     except Exception as e:
+        print(e)
         if e_vars.verbose: print('Creating summary.xlsx file')
         # if file does not exist, create it
         dict_sum = {'Run Datetime'                         : [], 'query': [], 'Country': [], 'MSRP': [],
@@ -1025,7 +1033,7 @@ def ebay_search(query: str,
             max_date = temp_df['Sold Date'].max()
             if e_vars.verbose: print('max_date:', max_date)
         else:
-            max_date = datetime(2020, 1, 1)
+            max_date = datetime(2023, 12, 1)
 
         directory = os.getcwd() + '\XMLs\\' + query
 
@@ -1040,14 +1048,14 @@ def ebay_search(query: str,
 
                 # Best to save semi-regularly in case eBay kills the connection
                 df = pd.DataFrame.drop_duplicates(df)
-                df.to_excel(f"Spreadsheets/{query}{e_vars.extra_title_text}.xlsx", engine='openpyxl')
+                df.to_excel(f"Spreadsheets\\{query}{e_vars.extra_title_text}.xlsx", engine='openpyxl')
                 requests_cache.remove_expired_responses()
 
     df = df[df['Ignore'] == 0]
 
     if min_date:
         df = df[df['Sold Date'] >= min_date]
-
+    df.to_excel("Spreadsheets\\debug.xlsx", engine='openpyxl')
     median_price, est_break_even, min_break_even, tot_sold, estimated_shipping = ebay_plot(query, msrp, df,
                                                                                            e_vars=e_vars)
 
@@ -1111,7 +1119,7 @@ def ebay_search(query: str,
     elapsed = time.time() - start
     print("Runtime: %02d:%02d:%02d" % (elapsed // 3600, elapsed // 60 % 60, elapsed % 60))
     print('')
-    df_sum = df_sum.append(dict_sum_new, ignore_index=True)
+    df_sum = df_sum._append(dict_sum_new, ignore_index=True)
 
     df_sum.to_excel('summary.xlsx', engine='openpyxl')
 

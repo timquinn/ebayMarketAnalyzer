@@ -43,11 +43,11 @@ e_vars = EbayVariables(run_cached=False,
                        extra_title_text='',
                        country='USA',
                        ccode='$',
-                       days_before=30,
+                       days_before=7,
                        feedback=True,
-                       quantity_hist=True,
-                       debug=False,
-                       verbose=False,
+                       quantity_hist=False,
+                       debug=True,
+                       verbose=True,
                        sacat=0,
                        tax_rate=0.0625,
                        store_rate=0.04,  # The computer store rate
@@ -89,43 +89,43 @@ for x in os.listdir():
     if x.endswith(".sqlite"):
         os.remove(x)
 
-df_darkhero = ebay_search('ASUS Dark Hero', mobo_vars, query_exclusions, 399, 400, 1000)
+# df_darkhero = ebay_search('ASUS Dark Hero', mobo_vars, query_exclusions, 399, 400, 1000)
 
 # ---------------------------------------------------------------------------------------------
 
 # Zen 3 Data Scraping & Analysis
-df_5950x = ebay_search('5950', cpu_vars, query_exclusions, 799, 800, 2250)
-df_5900x = ebay_search('5900', cpu_vars, query_exclusions, 549, 549, 2050)
-df_5800x = ebay_search('5800', cpu_vars, query_exclusions, 449, 449, 1000)
-df_5600x = ebay_search('5600', cpu_vars, query_exclusions, 299, 299, 1000)
+# df_5950x = ebay_search('5950', cpu_vars, query_exclusions, 799, 800, 2250)
+# df_5900x = ebay_search('5900', cpu_vars, query_exclusions, 549, 549, 2050)
+# df_5800x = ebay_search('5800', cpu_vars, query_exclusions, 449, 449, 1000)
+# df_5600x = ebay_search('5600', cpu_vars, query_exclusions, 299, 299, 1000)
 
 # Zen 3 Family Plotting
-zen3_frames = [df_5600x, df_5800x, df_5900x, df_5950x]
-median_plotting(zen3_frames, 'Zen 3 Median Pricing', e_vars=cpu_vars, roll=0)
-median_plotting(zen3_frames, 'Zen 3 Median Pricing', e_vars=cpu_vars, roll=7)
-ebay_seller_plot(zen3_frames, 'Zen 3', e_vars=cpu_vars)
+# zen3_frames = [df_5600x, df_5800x, df_5900x, df_5950x]
+# median_plotting(zen3_frames, 'Zen 3 Median Pricing', e_vars=cpu_vars, roll=0)
+# median_plotting(zen3_frames, 'Zen 3 Median Pricing', e_vars=cpu_vars, roll=7)
+# ebay_seller_plot(zen3_frames, 'Zen 3', e_vars=cpu_vars)
 
 # ---------------------------------------------------------------------------------------------
 
 # Big Navi Analysis
-df_6700 = ebay_search('RX 6700', gpu_vars, query_exclusions, 479, 479, 2500)
-df_6800 = ebay_search('RX 6800 -XT', gpu_vars, query_exclusions, 579, 579, 2500)
-df_6800xt = ebay_search('RX 6800 XT', gpu_vars, query_exclusions, 649, 850, 2000)
-df_6900 = ebay_search('RX 6900', gpu_vars, query_exclusions, 999, 999, 999999, min_date=datetime(2020, 12, 8))
+# df_6700 = ebay_search('RX 6700', gpu_vars, query_exclusions, 479, 479, 2500)
+# df_6800 = ebay_search('RX 6800 -XT', gpu_vars, query_exclusions, 579, 579, 2500)
+# df_6800xt = ebay_search('RX 6800 XT', gpu_vars, query_exclusions, 649, 850, 2000)
+# df_6900 = ebay_search('RX 6900', gpu_vars, query_exclusions, 999, 999, 999999, min_date=datetime(2020, 12, 8))
 
 # Big Navi Plotting
 
-bignavi_frames = [df_6700, df_6800, df_6800xt, df_6900]
-median_plotting(bignavi_frames, 'Big Navi Median Pricing', e_vars=gpu_vars, roll=0)
-median_plotting(bignavi_frames, 'Big Navi Median Pricing', e_vars=gpu_vars, roll=7)
+# bignavi_frames = [df_6700, df_6800, df_6800xt, df_6900]
+# median_plotting(bignavi_frames, 'Big Navi Median Pricing', e_vars=gpu_vars, roll=0)
+# median_plotting(bignavi_frames, 'Big Navi Median Pricing', e_vars=gpu_vars, roll=7)
 
-ebay_seller_plot(bignavi_frames, 'Big Navi', gpu_vars)
+# ebay_seller_plot(bignavi_frames, 'Big Navi', gpu_vars)
 
-brand_plot(bignavi_frames, 'Big Navi AIB Comparison', e_vars=gpu_vars, roll=0)
-brand_plot(bignavi_frames, 'Big Navi AIB Comparison', e_vars=gpu_vars, roll=7)
+# brand_plot(bignavi_frames, 'Big Navi AIB Comparison', e_vars=gpu_vars, roll=0)
+# brand_plot(bignavi_frames, 'Big Navi AIB Comparison', e_vars=gpu_vars, roll=7)
 
 # ---------------------------------------------------------------------------------------------
-
+'''
 # RTX 30 Series Analysis
 df_3060 = ebay_search('RTX 3060 -Ti -3060ti', gpu_vars, query_exclusions, 329, 329, 2000,
                       min_date=datetime(2021, 2, 25))
@@ -342,7 +342,7 @@ median_plotting(zenplus_frames, 'Zen+ Median Pricing', e_vars=cpu_vars, roll=0)
 median_plotting(zenplus_frames, 'Zen+ Median Pricing', e_vars=cpu_vars, roll=0)
 
 # ---------------------------------------------------------------------------------------------
-
+'''
 # PS4 Analysis
 df_ps4 = ebay_search('PS4 -pro -repair -box -broken -parts -bad', console_vars, query_exclusions, 399, 60, 5000)
 df_ps4_pro = ebay_search('PS4 pro -repair -box -broken -parts -bad', console_vars, query_exclusions, 399, 60, 5000)
@@ -410,7 +410,7 @@ median_plotting(switch_frames, 'Nintendo Switch Median Pricing', e_vars=console_
 median_plotting(switch_frames, 'Nintendo Switch Median Pricing', e_vars=console_vars, roll=7)
 
 # ---------------------------------------------------------------------------------------------
-
+'''
 # Fermi Series
 df_520 = ebay_search('(nvidia, GTX, geforce, gt) 520 -nvs -quadro', gpu_vars, query_exclusions, 59, 0, 2000)
 df_530 = ebay_search('(nvidia, GTX, geforce, gt) 530 -nvs -quadro -tesla', gpu_vars, query_exclusions, 75, 0, 400)
@@ -543,3 +543,4 @@ median_plotting(rx_400_frames, 'RX 400 Series Median Pricing', e_vars=gpu_vars, 
 median_plotting(rx_400_frames, 'RX 400 Series Median Pricing', e_vars=gpu_vars, roll=7)
 
 # ---------------------------------------------------------------------------------------------
+'''

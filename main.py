@@ -416,8 +416,8 @@ def sp_get_datetime(item, days_before_date, e_vars, sp_link):
     try:
         current_year = datetime.now().year
         current_month = datetime.now().month
-
         orig_item_datetime = f"{current_year} {item.find('span', class_='s-item__endedDate').text}"
+        # orig_item_datetime = f"{current_year} {item.find('span', class_='s-item__endedDate').text}"
         if e_vars.country == 'UK':
             item_datetime = datetime.strptime(orig_item_datetime, '%Y %d-%b %H:%M')
         else:
@@ -478,8 +478,8 @@ def ebay_scrape(base_url: str,
                 df: pd.DataFrame,
                 adapter: requests,
                 e_vars: EbayVariables,
-                min_date: datetime = datetime(2020, 1, 1),
-                max_date: datetime = datetime(2020, 1, 1)) -> pd.DataFrame:
+                min_date: datetime = datetime(2023, 10, 1),
+                max_date: datetime = datetime(2023, 10, 1)) -> pd.DataFrame:
     """
 
     Parameters
@@ -552,24 +552,35 @@ def ebay_scrape(base_url: str,
     def ip_get_datetime(item_soup, days_before_date):
         item_date, item_datetime = '', ''
         try:
-            date_one = item_soup.find('div', attrs={'class': 'u-flL vi-bboxrev-posabs vi-bboxrev-dsplinline'})
-            date_one = date_one.find('span', attrs={'id': 'bb_tlft'})
-            date_one = date_one.text.replace("\n", " ").replace(",", "").strip().split()
-
+            date_one = item_soup.find('div', attrs={'class': 'ux-layout-section__textual-display ux-layout-section__textual-display--statusMessage'})
+            date_one = date_one.find('span', attrs={'class': 'ux-textspans ux-textspans--BOLD'})
+            date_one = date_one.text.replace("\n", " ").replace("at", " ").replace("This listing ended on", "").replace(",", "").strip().split()
+            if date_one[4]=="PM":
+                temp = date_one[3].split(':')
+                date_one[3] = temp[0]
+                date_one[4] = temp[1]
+                date_one[3] = ""+int(date_one[3])+12
+                date_one.append('00')
+            else:
+                temp = date_one[3].split(':')
+                date_one[3] = temp[0]
+                date_one[4] = temp[1]
+                date_one.append('00')
+            print(f"{date_one[2]} {date_one[1]} {datetime.now().year} {date_one[3]}:{date_one[4]}:{date_one[5]}")
             try:
                 # Normally eBay stores the date as a 12 hour time, but at times it's 24 hour
                 if e_vars.country == 'UK':
-                    item_datetime = datetime.strptime(f"{date_one[0]} {date_one[1]} {date_one[2]} {date_one[3]}",
+                    item_datetime = datetime.strptime(f"{date_one[2]} {date_one[1]} {datetime.now().year} {date_one[3]}:{date_one[4]}:{date_one[5]}",
                                                       "%d %b %Y %I:%M:%S")
                 else:
-                    item_datetime = datetime.strptime(f"{date_one[0]} {date_one[1]} {date_one[2]} {date_one[3]}",
+                    item_datetime = datetime.strptime(f"{date_one[1]} {date_one[2]} {datetime.now().year} {date_one[3]}:{date_one[4]}:{date_one[5]}",
                                                       "%b %d %Y %I:%M:%S")
             except Exception as e:
                 if e_vars.country == 'UK':
-                    item_datetime = datetime.strptime(f"{date_one[0]} {date_one[1]} {date_one[2]} {date_one[3]}",
+                    item_datetime = datetime.strptime(f"{date_one[2]} {date_one[1]} {datetime.now().year} {date_one[3]}:{date_one[4]}:{date_one[5]}",
                                                       "%d %b %Y %H:%M:%S")
                 else:
-                    item_datetime = datetime.strptime(f"{date_one[0]} {date_one[1]} {date_one[2]} {date_one[3]}",
+                    item_datetime = datetime.strptime(f"{date_one[1]} {date_one[2]} {datetime.now().year} {date_one[3]}:{date_one[4]}:{date_one[5]}",
                                                       "%b %d %Y %H:%M:%S")
             item_datetime = item_datetime.replace(second=0, microsecond=0)
             item_date = item_datetime.replace(hour=0, minute=0)
@@ -781,6 +792,11 @@ def ebay_scrape(base_url: str,
                             item_soup = BeautifulSoup(source, 'lxml')
 
                         if not item_datetime:
+                            time.sleep(e_vars.sleep_len * random.uniform(0, 1))
+                            # We don't want to cache all the calls into the individual listings, they'll never be repeated
+                            with requests_cache.disabled():
+                                source = adapter.get(sp_get_item_link(item)).text
+                            item_soup = BeautifulSoup(source, 'lxml')
                             item_date_temp, item_datetime, days_before_date = ip_get_datetime(item_soup,
                                                                                               days_before_date)
                             if item_date_temp:
@@ -788,12 +804,12 @@ def ebay_scrape(base_url: str,
                             if e_vars.debug or e_vars.verbose: print('Date-3:', item_date)
                             if e_vars.debug or e_vars.verbose: print('Datetime-3:', item_datetime)
 
-                        seller, seller_fb, store = ip_get_seller(item_soup)
+                        seller, seller_fb, store = ip_get_seller(source)
                         if e_vars.debug or e_vars.verbose: print('Seller:', seller)
                         if e_vars.debug or e_vars.verbose: print('Seller Feedback:', seller_fb)
                         if e_vars.debug or e_vars.verbose: print('Store:', store)
 
-                        city, state, country_name = ip_get_loc_data(item_soup)
+                        city, state, country_name = ip_get_loc_data(source)
                         if e_vars.debug or e_vars.verbose: print('City:', city)
                         if e_vars.debug or e_vars.verbose: print('State:', state)
                         if e_vars.debug or e_vars.verbose: print('Country Name:', country_name)
@@ -845,6 +861,21 @@ def ebay_scrape(base_url: str,
 
                     if not item_datetime and item_date:
                         item_datetime = item_date
+                    if not item_datetime and not item_date:
+                        try:
+                            date_time = item.find('span', attrs={'class': 'POSITIVE'}).text
+
+                            if 'Sold' in date_time:
+                                date_txt = date_time.replace('Sold', '').replace(',', '').strip()
+                                if e_vars.country == 'UK':
+                                    item_date = datetime.strptime(date_txt, "%d %b %Y")
+                                else:
+                                    item_date = datetime.strptime(date_txt, "%b %d %Y")
+                            item_datetime = item_date
+
+                        except Exception as e:
+
+                            if e_vars.verbose: print('Datetime could not be set, default to today', e)
 
                     if days_before_date < comp_date or min(item_date, days_before_date) < min_date:
                         time_break = True
@@ -870,7 +901,7 @@ def ebay_scrape(base_url: str,
                                 {'Link': [item_link], 'Sold Datetime': [item_datetime]}).all(
                                 axis='columns').any() and item_tot > 0 and (quantity_sold - cap_sum) > 0:
                             if e_vars.verbose: print('non-multi', df__new)
-                            df = df.append(df__new, ignore_index=True)
+                            df = df._append(df__new, ignore_index=True)
                             # Considered processing as went along, more efficient to just remove duplicates in postprocessing
                     else:
                         for sale in sold_list:
@@ -894,7 +925,7 @@ def ebay_scrape(base_url: str,
                                     {'Link': [item_link], 'Sold Datetime': [sale[3]]}).all(
                                     axis='columns').any() and item_tot > 0:
                                 if e_vars.verbose: print('multi', df__new)
-                                df = df.append(df__new, ignore_index=True)
+                                df = df._append(df__new, ignore_index=True)
 
                         tot_sale_quant = np.sum(sold_list[:, 1])
 
@@ -918,7 +949,7 @@ def ebay_scrape(base_url: str,
                                      'Quantity': [quantity_sold - tot_sale_quant]}).all(
                                     axis='columns').any() and item_tot > 0:
                                 if e_vars.verbose: print('multi-extra', df__new)
-                                df = df.append(df__new, ignore_index=True)
+                                df = df._append(df__new, ignore_index=True)
 
         if e_vars.country == 'UK' and len(items) < 193:
             if e_vars.verbose: print('UK item break', len(items))
@@ -939,7 +970,7 @@ def ebay_search(query: str,
                 msrp: float = 0,
                 min_price: float = 0,
                 max_price: float = 10000,
-                min_date: datetime = datetime.now() - timedelta(days=365)) -> pd.DataFrame:
+                min_date: datetime = datetime.now() - timedelta(days=7)) -> pd.DataFrame:
     """
     The main function of the project which searches eBay for a query, gathering all sold listings and outputting a
     dataframe of the search query and generates basic plots on the data.
@@ -986,7 +1017,7 @@ def ebay_search(query: str,
     retry_strategy = Retry(
             total=5,
             status_forcelist=[429, 500, 502, 503, 504, 404],
-            method_whitelist=["HEAD", "GET", "OPTIONS"],
+            #method_whitelist=["HEAD", "GET", "OPTIONS"],
             backoff_factor=1
 
     )
@@ -1209,7 +1240,7 @@ def ebay_search(query: str,
     elapsed = time.time() - start
     print("Runtime: %02d:%02d:%02d" % (elapsed // 3600, elapsed // 60 % 60, elapsed % 60))
     print('')
-    df_sum = df_sum.append(dict_sum_new, ignore_index=True)
+    df_sum = df_sum._append(dict_sum_new, ignore_index=True)
 
     df_sum.to_excel('summary.xlsx', engine='openpyxl')
 
