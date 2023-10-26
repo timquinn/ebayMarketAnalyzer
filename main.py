@@ -54,6 +54,7 @@ def validate_inputs(query: str,
     -------
         A boolean value if inputs are valid or not.
     """
+
     validation_success = True
     if not isinstance(query, str):
         print('query is not a string!')
@@ -590,10 +591,16 @@ def ebay_scrape(base_url: str,
             if e_vars.verbose: print('ip_get_datetime', e, item_link)
         return item_date, item_datetime, days_before_date
 
+    def slicer(my_str,sub):
+        index=my_str.find(sub)+3
+        if index !=-1 :
+            return my_str[index:] 
+        else:
+            raise Exception('Sub string not found!')
     def ip_get_loc_data(item_soup):
         city, state, country_name = '', '', ''
         try:
-            loc = item_soup.find('div', attrs={'class': 'iti-eu-bld-gry'})
+            loc = item_soup.find('span', attrs={'class': 'iti-eu-bld-gry'})
             loc = loc.find('span').text.split(',')
             if len(loc) == 2:
                 city, state, country_name = loc[0].strip(), '', loc[1].strip()
@@ -602,33 +609,47 @@ def ebay_scrape(base_url: str,
             else:
                 raise Exception
         except Exception as e:
-            if e_vars.verbose: print('ip_get_loc_data-1', e, item_link)
             try:
-                loc_2 = item_soup.find('div', attrs={'class': 'vi-wp vi-VR-cvipCntr1'})
-                loc_2 = loc_2.find_all('tr', attrs={'class': 'vi-ht20'})
-                for l in loc_2:
-                    if l.text.find('Item location:') > 0:
-                        i_loc = l.find_all('div', attrs={'class': 'u-flL'})
-                        loc_text = i_loc[1].text.split(',')
-                        if len(loc_text) == 2:
-                            city, state, country_name = loc_text[0].strip(), '', loc_text[1].strip()
-                        elif len(loc_text) == 3:
-                            city, state, country_name = loc_text[0].strip(), loc_text[1].strip(), loc_text[2].strip()
-                        break
-            except Exception as e:
-                if e_vars.verbose: print('ip_get_loc_data-2', e, item_link)
+                loc = item_soup.find('div', attrs={'class': 'vim d-vi-region x-atf-center-river--bottom'})
+                loc = loc.find('span', attrs={'class': 'ux-textspans ux-textspans--SECONDARY'})
+                loc = loc.text.split(',')
+                loc[0] = loc[0].strip()
+                loc[0] = slicer(loc[0], 'in:')
+                if len(loc) == 2:
+                    city, state, country_name = loc[0], '', loc[1].strip()
+                elif len(loc) == 3:
+                    city, state, country_name = loc[0], loc[1].strip(), loc[2].strip()
+                else:
+                    raise Exception
+            except:
+                if e_vars.verbose: print('ip_get_loc_data-1', e, item_link)
+                try:
+                    loc_2 = item_soup.find('div', attrs={'class': 'vi-wp vi-VR-cvipCntr1'})
+                    loc_2 = loc_2.find_all('tr', attrs={'class': 'vi-ht20'})
+                    for l in loc_2:
+                        if l.text.find('Item location:') > 0:
+                            i_loc = l.find_all('div', attrs={'class': 'u-flL'})
+                            loc_text = i_loc[1].text.split(',')
+                            if len(loc_text) == 2:
+                                city, state, country_name = loc_text[0].strip(), '', loc_text[1].strip()
+                            elif len(loc_text) == 3:
+                                city, state, country_name = loc_text[0].strip(), loc_text[1].strip(), loc_text[2].strip()
+                            break
+                except Exception as e:
+                    if e_vars.verbose: print('ip_get_loc_data-2', e, item_link)
         return city, state, country_name
 
     def ip_get_seller(item_soup):
         seller, seller_fb, store = '', '', False
         try:
-            seller_text = item_soup.find_all('span', attrs={'class': 'mbg-nw'})
+            seller_text = item_soup.find_all('span', attrs={'class': 'ux-textspans ux-textspans--PSEUDOLINK ux-textspans--BOLD'})
             seller = seller_text[0].text
 
-            seller_fb_text = item_soup.find_all('span', attrs={'class': 'mbg-l'})
-            seller_fb = int(seller_fb_text[0].find('a').text)
+            seller_fb_text = item_soup.find_all('span', attrs={'class': 'ux-textspans ux-textspans--PSEUDOLINK'})
+            seller_fb = int(seller_fb_text[1].text)
+            # seller_fb = int(seller_fb_text[0].find('a').text)
 
-            store_id = item_soup.find_all('div', attrs={'id': 'storeSeller'})
+            store_id = item_soup.find_all('span', attrs={'class': 'ux-textspans ux-textspans--PSEUDOLINK'})
 
             if len(store_id[0].text) > 0:
                 store = True
@@ -804,12 +825,12 @@ def ebay_scrape(base_url: str,
                             if e_vars.debug or e_vars.verbose: print('Date-3:', item_date)
                             if e_vars.debug or e_vars.verbose: print('Datetime-3:', item_datetime)
 
-                        seller, seller_fb, store = ip_get_seller(source)
+                        seller, seller_fb, store = ip_get_seller(item_soup)
                         if e_vars.debug or e_vars.verbose: print('Seller:', seller)
                         if e_vars.debug or e_vars.verbose: print('Seller Feedback:', seller_fb)
                         if e_vars.debug or e_vars.verbose: print('Store:', store)
 
-                        city, state, country_name = ip_get_loc_data(source)
+                        city, state, country_name = ip_get_loc_data(item_soup)
                         if e_vars.debug or e_vars.verbose: print('City:', city)
                         if e_vars.debug or e_vars.verbose: print('State:', state)
                         if e_vars.debug or e_vars.verbose: print('Country Name:', country_name)
@@ -1248,5 +1269,11 @@ def ebay_search(query: str,
 
     df = df.assign(item=query_item_name)
     df = df.assign(msrp=msrp)
-    os.remove(f"{cache_name}.sqlite")
+
+    
+    try:
+        os.remove(f"{cache_name}.sqlite")
+    except OSError as e:
+        # If it fails, inform the user.
+        print("Error: %s - %s." % (e.filename, e.strerror))
     return df

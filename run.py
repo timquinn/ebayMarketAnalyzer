@@ -14,6 +14,14 @@ from classes import EbayVariables
 from main import ebay_search
 from plotting import median_plotting, brand_plot, ebay_seller_plot
 
+
+"""
+    German format might cause main to cause errors
+    changing Locale might solve the problem:
+    locale.setlocale(locale.LC_C,"the monetary comes here!")    
+"""
+
+
 brand_list = ['FOUNDER', 'ASUS', 'MSI', 'EVGA', 'GIGABYTE', 'ZOTAC', 'XFX', 'PNY', 'SAPPHIRE', 'COLORFUL', 'ASROCK',
               'POWERCOLOR', 'INNO3D', 'PALIT', 'VISIONTEK', 'DELL']
 model_list = [['XC3', 'EVGA'], ['TRINITY', 'ZOTAC'], ['FTW3', 'EVGA'], ['FOUNDER', 'FOUNDER'], ['STRIX', 'ASUS'],
