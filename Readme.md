@@ -1,3 +1,5 @@
+Forked from: https://github.com/driscoll42/ebayMarketAnalyzer
+
 # eBay Marker Analyzer
 
 #### Formerly eBay Sold Price Scraper
